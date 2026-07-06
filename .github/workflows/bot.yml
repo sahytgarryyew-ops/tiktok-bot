@@ -21,7 +21,7 @@ jobs:
     - name: Install ffmpeg
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        sudo apt-get install -y ffmpeg imagemagick
     
     - name: Install dependencies
       run: |
@@ -29,9 +29,10 @@ jobs:
     
     - name: Run bot
       run: python bot.py
+      timeout-minutes: 30
     
     - name: Upload clips to artifacts
       uses: actions/upload-artifact@v4
       with:
         name: tiktok-clips
-        path: clips_*/
+        path: tiktok_clips_*/
