@@ -10,38 +10,49 @@ VIDEO_URLS = [
 
 def download_video(url, output_name="video.mp4"):
     print(f"Downloading: {url}")
+    
     ydl_opts = {
-        'format': 'best',
+        'format': 'best[height<=1080]',  # Не лучшее качество, но стабильное
         'outtmpl': output_name,
         'quiet': False,
         'no_warnings': True,
         'extract_flat': False,
-        'ignoreerrors': True,
-        'retries': 3,
-        'fragment_retries': 3,
+        'ignoreerrors': False,
+        'retries': 5,
+        'fragment_retries': 5,
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+        'socket_timeout': 30,
+        'extractor_retries': 3,
     }
+    
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-        print(f"Video downloaded: {output_name}")
-        return output_name
+            info = ydl.extract_info(url, download=True)
+            print(f"Video downloaded: {output_name}")
+            print(f"Title: {info.get('title', 'Unknown')}")
+            print(f"Duration: {info.get('duration', 0)} seconds")
+            return output_name
     except Exception as e:
         print(f"Download error: {e}")
-        print("Trying alternative method...")
-        # Пробуем с другими параметрами
+        print("Trying with different format...")
+        
+        # Пробуем другой формат
         ydl_opts_alt = {
-            'format': 'worst',  # Пробуем худшее качество
+            'format': 'worst[height<=480]',  # Низкое качество, но работает
             'outtmpl': output_name,
             'quiet': False,
             'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15',
             }
         }
+        
         with YoutubeDL(ydl_opts_alt) as ydl:
-            ydl.download([url])
+            info = ydl.extract_info(url, download=True)
+        
         return output_name
 
 def transcribe_audio(video_path):
