@@ -5,7 +5,7 @@ from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import whisper
 
 VIDEO_URLS = [
-    "https://www.youtube.com/watch?v=8jPQjjsBbIc",
+    "https://www.youtube.com/watch?v=8jPQjjsBbIc",  # TED Talk (точно сработает)
 ]
 
 def download_video(url, output_name="video.mp4"):
