@@ -5,7 +5,7 @@ from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import whisper
 
 VIDEO_URLS = [
-    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  # ЗАМЕНИТЕ НА СВОЮ ССЫЛКУ
 ]
 
 def download_video(url, output_name="video.mp4"):
@@ -20,8 +20,15 @@ def transcribe_audio(video_path):
     print("Transcribing audio (Whisper AI)...")
     try:
         model = whisper.load_model("base")
-        result = model.transcribe(video_path, language="ru")
+        # Auto-detect language (убрали language="ru")
+        result = model.transcribe(video_path)
         print(f"Transcribed {len(result['segments'])} phrases")
+        print(f"Language detected: {result.get('language', 'unknown')}")
+        
+        # Показываем первые 3 фразы для проверки
+        for i, segment in enumerate(result['segments'][:3]):
+            print(f"  [{segment['start']:.1f}-{segment['end']:.1f}] {segment['text']}")
+        
         return result['segments']
     except Exception as e:
         print(f"Transcription error: {e}")
@@ -51,8 +58,11 @@ def make_vertical_clip(video, start, end, subtitles=None):
         clip = clip.fx(lambda clip: clip.fl_image(lambda img: img * random.uniform(0.95, 1.05)))
     
     # Add subtitles
-    if subtitles:
+    if subtitles and len(subtitles) > 0:
+        print(f"Adding subtitles to clip ({len(subtitles)} phrases)")
         clip = add_subtitles(clip, subtitles, start)
+    else:
+        print("WARNING: No subtitles to add!")
     
     return clip
 
@@ -70,27 +80,34 @@ def add_subtitles(clip, subtitles, clip_start_time):
         sub_start = max(0, sub_start)
         sub_end = min(clip_duration, sub_end)
         
+        if sub_start >= sub_end:
+            continue
+        
         try:
+            # Создаем текстовый клип
             txt_clip = TextClip(
-                sub['text'],
-                fontsize=45,
+                sub['text'].strip(),
+                fontsize=50,
                 color='white',
                 font='Arial-Bold',
                 stroke_color='black',
-                stroke_width=2,
-                method='caption',
-                size=(clip.w - 40, None)
+                stroke_width=3,
+                method='label'
             )
-            txt_clip = txt_clip.set_pos(('center', 1750)).set_duration(sub_end - sub_start).set_start(sub_start)
+            
+            # Позиция внизу по центру
+            txt_clip = txt_clip.set_pos(('center', 1700)).set_duration(sub_end - sub_start).set_start(sub_start)
             subtitle_clips.append(txt_clip)
+            
         except Exception as e:
             print(f"Subtitle error: {e}")
     
     if subtitle_clips:
-        print(f"Added {len(subtitle_clips)} subtitles")
+        print(f"Successfully added {len(subtitle_clips)} subtitle clips")
         return CompositeVideoClip([clip] + subtitle_clips)
-    
-    return clip
+    else:
+        print("WARNING: No subtitle clips created!")
+        return clip
 
 def cut_video_for_tiktok(input_file, output_folder, subtitles=None):
     print(f"Cutting video: {input_file}")
@@ -101,12 +118,14 @@ def cut_video_for_tiktok(input_file, output_folder, subtitles=None):
     clip_duration = random.randint(65, min(90, duration))
     clip_number = 1
     
+    print(f"Total subtitles available: {len(subtitles) if subtitles else 0}")
+    
     for i in range(0, duration - clip_duration, clip_duration // 2):
         end = min(i + clip_duration, duration)
         if end - i < 61:
             break
         
-        print(f"Clip {clip_number}: {end-i} sec")
+        print(f"\nClip {clip_number}: {end-i} sec (from {i} to {end})")
         clip = make_vertical_clip(video, i, end, subtitles)
         
         output_path = f"{output_folder}/tiktok_clip_{clip_number}.mp4"
@@ -120,7 +139,7 @@ def cut_video_for_tiktok(input_file, output_folder, subtitles=None):
             break
     
     video.close()
-    print(f"Created {clip_number - 1} clips!")
+    print(f"\nCreated {clip_number - 1} clips!")
     return clip_number - 1
 
 def main():
@@ -133,6 +152,11 @@ def main():
         
         video_file = download_video(url, f"video_{i}.mp4")
         subtitles = transcribe_audio(video_file)
+        
+        if not subtitles or len(subtitles) == 0:
+            print("ERROR: No subtitles generated! Skipping video...")
+            continue
+        
         num_clips = cut_video_for_tiktok(video_file, f"tiktok_clips_{i}", subtitles)
         print(f"Video {i+1} processed! Clips: {num_clips}")
     
