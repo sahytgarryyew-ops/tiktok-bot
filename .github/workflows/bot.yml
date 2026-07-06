@@ -18,18 +18,20 @@ jobs:
       with:
         python-version: '3.10'
     
-    - name: Install ffmpeg
+    - name: Install ffmpeg and ImageMagick
       run: |
         sudo apt-get update
         sudo apt-get install -y ffmpeg imagemagick
+        sudo apt-get install -y libmagickwand-dev
     
     - name: Install dependencies
       run: |
+        pip install --upgrade pip
         pip install -r requirements.txt
     
     - name: Run bot
       run: python bot.py
-      timeout-minutes: 30
+      timeout-minutes: 45
     
     - name: Upload clips to artifacts
       uses: actions/upload-artifact@v4
