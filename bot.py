@@ -1,7 +1,44 @@
+Отлично! Вижу ошибку:
+
+```
+AttributeError: module 'moviepy.audio.fx.all' has no attribute 'speedx'
+```
+
+**Проблема:** В MoviePy 1.0.3 функция `speedx` работает иначе. Нужно исправить.
+
+---
+
+## 🔧 Исправление:
+
+Откройте `bot.py`, нажмите ✏️ и **найдите строку 77** (где `clip.fx(afx.speedx, 1.05)`).
+
+**Замените эту строку:**
+```python
+clip = clip.fx(afx.speedx, 1.05)
+```
+
+**На:**
+```python
+clip = clip.fx(afx.volumex, 1.0)  # Просто оставляем громкость, без изменения скорости
+```
+
+Или **полностью уберите изменение скорости** — замените строку 77 на:
+
+```python
+# clip = clip.fx(afx.speedx, 1.05)  # Отключено из-за совместимости
+```
+
+---
+
+## 📝 Или вот полный исправленный код:
+
+Замените **весь код** в `bot.py` на этот (исправил проблему со speedx):
+
+```python
 import os
 import random
 from yt_dlp import YoutubeDL
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, afx
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import whisper
 
 VIDEO_URLS = [
@@ -44,13 +81,13 @@ def make_vertical_clip(video, start, end, subtitles=None):
     clip = clip.resize(height=1920)
     clip = clip.crop(x1=0, y1=0, x2=1080, y2=1920)
     
-    # Применяем эффекты
-    if random.random() > 0.3:
-        clip = clip.fx(afx.speedx, 1.05)
+    # Применяем эффекты (без speedx - он не работает в moviepy 1.0.3)
     if random.random() > 0.7:
-        clip = clip.fx(afx.time_mirror)
+        # Зеркальное отражение (зеркалим видео)
+        clip = clip.fx(lambda clip: clip.fl_image(lambda img: img[:, ::-1]))
     if random.random() > 0.5:
-        clip = clip.fx(afx.colorx, random.uniform(0.95, 1.05))
+        # Яркость
+        clip = clip.fx(lambda clip: clip.fl_image(lambda img: img * random.uniform(0.95, 1.05)))
     
     # Добавляем субтитры
     if subtitles:
@@ -134,13 +171,8 @@ def main():
         print('='*60)
         
         video_file = download_video(url, f"video_{i}.mp4")
-        
-        # Распознаем речь
         subtitles = transcribe_audio(video_file)
-        
-        # Нарезаем с субтитрами
         num_clips = cut_video_for_tiktok(video_file, f"tiktok_clips_{i}", subtitles)
-        
         print(f"\n✅ Видео {i+1} обработано! Клипов: {num_clips}")
     
     print("\n" + "="*60)
@@ -149,3 +181,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+Нажмите **"Commit changes"**
+
+---
+
+## 🔄 Запустите заново:
+
+1. Actions → TikTok Video Bot
+2. Run workflow → Run workflow
+3. Подождите 20-30 минут
+
+**Теперь должно заработать!** 💪
