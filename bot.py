@@ -5,7 +5,7 @@ from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import whisper
 
 VIDEO_URLS = [
-    "https://youtu.be/iYlODtkyw_I?si=FyWrbCGXInBXXgV3",
+    "https://www.youtube.com/watch?v=8jPQjjsBbIc",
 ]
 
 def download_video(url, output_name="video.mp4"):
