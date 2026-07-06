@@ -10,11 +10,39 @@ VIDEO_URLS = [
 
 def download_video(url, output_name="video.mp4"):
     print(f"Downloading: {url}")
-    ydl_opts = {'format': 'best', 'outtmpl': output_name, 'quiet': True}
-    with YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-    print(f"Video downloaded: {output_name}")
-    return output_name
+    ydl_opts = {
+        'format': 'best',
+        'outtmpl': output_name,
+        'quiet': False,
+        'no_warnings': True,
+        'extract_flat': False,
+        'ignoreerrors': True,
+        'retries': 3,
+        'fragment_retries': 3,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+    }
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+        print(f"Video downloaded: {output_name}")
+        return output_name
+    except Exception as e:
+        print(f"Download error: {e}")
+        print("Trying alternative method...")
+        # Пробуем с другими параметрами
+        ydl_opts_alt = {
+            'format': 'worst',  # Пробуем худшее качество
+            'outtmpl': output_name,
+            'quiet': False,
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
+            }
+        }
+        with YoutubeDL(ydl_opts_alt) as ydl:
+            ydl.download([url])
+        return output_name
 
 def transcribe_audio(video_path):
     print("Transcribing audio (Whisper AI)...")
